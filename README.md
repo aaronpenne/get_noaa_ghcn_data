@@ -1,4 +1,4 @@
-# noaa_ghcn_data_to_csv
+# get_noaa_ghcn_data
 Global Historical Climatology Network data parsed into reshaped CSVs
 
 
