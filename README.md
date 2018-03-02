@@ -4,9 +4,9 @@ Global Historical Climatology Network data parsed into reshaped CSVs
 
 ## FIXME
 * Focus on .dly first
-  * Grab current .dly file from FTP server
+  * ~~Grab current .dly file from FTP server~~
     * ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/all/
-  * Read .dly file into DataFrame using ICD
+  * ~~Read .dly file into DataFrame using ICD~~
     * https://www1.ncdc.noaa.gov/pub/data/ghcn/daily/readme.txt
     * Create separate lists first then create empty DataFrame and fill with lists as columns
     ```python
@@ -18,7 +18,8 @@ Global Historical Climatology Network data parsed into reshaped CSVs
                 break
         break
     ```
-  * Reshape data to have one day per line (lump flags together like Q-XY)
+  * Option to download .dly file or read from stream?
+  * ~~Reshape data to have one day per line (lump flags together like Q-XY)~~
   
     | DAY | PRCP | PRCP_M | PRCP_Q | PRCP_S | TMIN | TMIN_M | ... |
     | --- | ---- | ------ | ------ | ------ | ---- | ------ | --- |
