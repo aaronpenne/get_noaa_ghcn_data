@@ -162,7 +162,8 @@ while True:
         break
     
     # Let us know if it's running
-    print('{}-{}  {}'.format(year, month, i))
+    if i % 100 == 0:
+        print('YYYY-MM: {}-{}  Line: {}'.format(year, month, i))
     
     # Loop through each day in rest of row, break if current position is end of row
     while True:
@@ -218,95 +219,3 @@ df_all['TAVG_CALC'] = df_all['TAVG_CALC'] / 10
 # NOTE: To open the CSV in Excel, go through the CSV import wizard, otherwise it will come out broken
 df_out = df_all.astype(str)
 df_out.to_csv(output_dir + ftp_filename + '.csv')
-
-
-##############################################################################
-# Ploting needs to get moved to different file
-
-import seaborn as sns
-import matplotlib.pyplot as plt
-
-# Filter data to years with complete records (1921 to 2017 after doing
-# inspection with df.pivot_table(values='TMAX', columns='YEAR', aggfunc='count'))
-year_filter = [str(i) for i in range(1921,2017)]
-df = df_all.loc[df_all['YEAR'].isin(year_filter)]
-bandwidth = 0.35
-
-# Set up plotting and formatting of viz
-sns.set(style="white", rc={"axes.facecolor": (0, 0, 0, 0)})
-font_h1 = {'family': 'monospace',
-           'color': 'black',
-           'weight': 'bold',
-           'size': 16,
-           'horizontalalignment': 'center'}
-font_h2 = {'family': 'monospace',
-           'color': 'black',
-           'size': 14,
-           'horizontalalignment': 'center'}
-font_sub = {'family': 'monospace',
-            'color': 'black',
-            'weight': 'regular',
-            'size': 10,
-            'horizontalalignment': 'right'}
-
-# Create axes for each Year, one row per Year
-g = sns.FacetGrid(data=df,
-                  row='YEAR',  # Determines which value to group by, in this case the different values in the 'Year' column
-                  hue='YEAR',  # Similar to row. Enables the date labels on each subplot
-                  aspect=18,   # Controls aspect ratio of entire figure
-                  size=0.5,    # Controls vertical height of each subplot
-                  palette=sns.color_palette("Set2", 1))  # Uses a nice green for the area
-
-# Create KDE area plots
-#g.map(sns.kdeplot, 'TMAX', bw=bandwidth, clip_on=False, shade=True, alpha=1)
-
-# Create KDE line plots to outline the areas
-g.map(sns.kdeplot, 'TMAX', bw=bandwidth, clip_on=False, color='black')
-
-# Create the psuedo x-axes
-#g.map(plt.axhline, y=0, lw=2, clip_on=False, color='black')
-
-# Define and use a simple function to label the plot in axes coordinates
-# https://seaborn.pydata.org/examples/kde_joyplot.html
-def label(x, color, label):
-    ax = plt.gca()
-#    ax.set_xlim([-2,4])
-    ax.text(0, 0.07, 
-            label,
-            family='monospace',
-            fontsize=12,
-            color='black', 
-            ha='left',
-            va='center',
-            transform=ax.transAxes)
-g.map(label, 'TMAX')
-
-# Overlap the plots to give the ridgeline effect
-g.fig.subplots_adjust(hspace=-.9)
-
-# Clean up axes and remove subplot titles
-g.set_titles('')
-g.set(yticks=[])
-#plt.xticks([0, 1, 2, 3], 
-#           ['Constitutional Ban',
-#            'Statutory Ban',
-#            'No Law',
-#            'Legal'],
-#            rotation=90,
-#            fontsize=12,
-#            fontname='monospace')
-plt.xlabel('')
-g.despine(bottom=True, left=True)
-
-# Add titles and annotations
-#plt.text(1, 8.5,
-#         'State Same Sex Marriage Laws in the USA',
-#         fontdict=font_h1)
-#plt.text(1, 8.3,
-#         'Percent of states w/each law type from 1995-2015',
-#         fontdict=font_h2)
-#plt.text(4, -1.8,
-#         '© Aaron Penne 2018\nSource: Pew Research Center',
-#         fontdict=font_sub)
-
-g.savefig('{0}joy_TMAX.png'.format(output_dir), dpi=300, bbox_inches='tight')
