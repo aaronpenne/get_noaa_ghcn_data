@@ -74,6 +74,12 @@ ftp.login()  # No credentials needed
 # Write .dly file to stream using StringIO using FTP command 'RETR'
 s = StringIO()
 ftp.retrlines('RETR ' + ftp_path_dly + ftp_filename, s.write)
+s.seek(0)
+
+# Write .dly file to dir to preserve original # FIXME make optional?
+with open(output_dir + ftp_filename, 'wb+') as f:
+    ftp.retrbinary('RETR ' + ftp_path_dly + ftp_filename, f.write)
+
 
 def create_dict(element):
     element = element.upper()

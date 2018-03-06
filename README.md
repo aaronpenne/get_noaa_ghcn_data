@@ -23,7 +23,7 @@ Global Historical Climatology Network data parsed into reshaped CSVs
     | 12  | 0.5  | Q-XY       | 55   | MX-        | ... |
     
   * ~~Ouput file as CSV~~
-* Make search tool to get station IDs
+* ~~Make search tool to get station IDs~~
   * ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-stations.txt
 * Import reshaped files into database instead of CSVs
 * Make awesome charts!
