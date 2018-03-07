@@ -1,4 +1,5 @@
-# get_noaa_ghcn_data
+get_noaa_ghcn_data
+==================
 
 Global Historical Climatology Network data parsed into reshaped CSVs. The `get_dly.py` program grabs a .dly file from the NOAA GHCN FTP server, parses, and reshapes to have one day per row and element values in the columns. The output is written out as a pandas DataFrame and a CSV file.
 
@@ -55,15 +56,15 @@ Conversions:
 
 
 
-## FIXME
-* Focus on .dly first
-  * ~~Grab current .dly file from FTP server~~
-    * ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/all/
-  * ~~Read .dly file into DataFrame using ICD~~
-    * https://www1.ncdc.noaa.gov/pub/data/ghcn/daily/readme.txt
-    * ~~Create separate lists first then create empty DataFrame and fill with lists as columns~~
-  * Option to download .dly file or read from stream?
-  * ~~Reshape data to have one day per line (lump flags together like Q-XY)~~
+FIXME
+-----
+
+- [ ] Focus on .dly first
+- [x] Grab current .dly file from FTP server ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/all/
+- [x] Read .dly file into DataFrame using ICD https://www1.ncdc.noaa.gov/pub/data/ghcn/daily/readme.txt
+- [x] Create separate lists first then create empty DataFrame and fill with lists as columns
+    - [ ] Option to download .dly file or read from stream?
+    - [x] Reshape data to have one day per line (lump flags together like Q-XY)
   
     | DAY | PRCP | PRCP_M | PRCP_Q | PRCP_S | TMIN | TMIN_M | ... |
     | --- | ---- | ------ | ------ | ------ | ---- | ------ | --- |
@@ -75,8 +76,7 @@ Conversions:
     | --- | ---- | ---------- | ---- | ---------- | --- |
     | 12  | 0.5  | Q-XY       | 55   | MX-        | ... |
     
-  * ~~Ouput file as CSV~~
-* ~~Make search tool to get station IDs~~
-  * ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-stations.txt
-* Import reshaped files into database instead of CSVs
-* Make awesome charts!
+- [x] Ouput file as CSV
+- [x] Make search tool to get station IDs ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-stations.txt
+- [ ] Import reshaped files into database instead of CSVs
+- [ ] Make awesome charts!
