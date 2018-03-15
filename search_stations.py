@@ -25,7 +25,7 @@ import pandas as pd
 from ftplib import FTP
 import os
 
-output_dir = 'C:\\tmp\\noaa_ghcn\\'
+output_dir = os.path.realpath(r'C:\tmp\noaa_ghcn')
 if not os.path.isdir(output_dir):
     os.mkdir(output_dir)
 
@@ -39,8 +39,8 @@ ftp = FTP(ftp_path_root)
 ftp.login()  # No credentials needed
 
 # Get stations file
-ftp_full_path = ftp_path_dly + ftp_filename
-local_full_path = output_dir + ftp_filename
+ftp_full_path = os.path.join(ftp_path_dly, ftp_filename)
+local_full_path = os.path.join(output_dir, ftp_filename)
 if not os.path.isfile(local_full_path):
     with open(local_full_path, 'wb+') as f:
         ftp.retrbinary('RETR ' + ftp_full_path, f.write)
