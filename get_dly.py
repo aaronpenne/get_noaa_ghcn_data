@@ -21,11 +21,6 @@ Starting with 5 core elements (per README)
     TMAX = Maximum temperature (tenths of degrees C)
     TMIN = Minimum temperature (tenths of degrees C)
 
-Conversions:
-    PRCP = (tenths of mm) -> (mm)
-    TMAX = (tenths of degrees C) -> (degrees C)
-    TMIN = (tenths of degrees C) -> (degrees C)
-    
 ICD:
     ------------------------------
     Variable   Columns   Type
@@ -57,60 +52,31 @@ from ftplib import FTP
 from io import StringIO
 import os
 
-output_dir = 'C:\\tmp\\noaa_ghcn\\'
+output_dir = os.path.relpath('output')
 if not os.path.isdir(output_dir):
     os.mkdir(output_dir)
 
-# Get FTP server and file details
-ftp_path_root = 'ftp.ncdc.noaa.gov'
-ftp_path_dly = '/pub/data/ghcn/daily/all/'
-# FIXME this will become the result of a search on the stations txt file
-ftp_filename = 'USW00093134.dly'  # USW00093134  34.0511 -118.2353   70.1 CA LOS ANGELES DWTN USC CAMPUS 
+ftp_path_dly_all = '/pub/data/ghcn/daily/all/'
 
-# Access NOAA FTP server
-ftp = FTP(ftp_path_root)
-ftp.login()  # No credentials needed
+def connect_to_ftp():
+    # Get FTP server and file details
+    ftp_path_root = 'ftp.ncdc.noaa.gov'
+    
+    # Access NOAA FTP server
+    ftp = FTP(ftp_path_root)
+    message = ftp.login()  # No credentials needed
+    print(message)
+    return ftp
 
-# Write .dly file to stream using StringIO using FTP command 'RETR'
-s = StringIO()
-ftp.retrlines('RETR ' + ftp_path_dly + ftp_filename, s.write)
-s.seek(0)
-
-# Write .dly file to dir to preserve original # FIXME make optional?
-with open(output_dir + ftp_filename, 'wb+') as f:
-    ftp.retrbinary('RETR ' + ftp_path_dly + ftp_filename, f.write)
-
-
-def create_dict(element):
-    element = element.upper()
-    dict_element = {'ID': [],
-                    'YEAR': [],
-                    'MONTH': [],
-                    'DAY': [],
-                    element : [],
-                    element + '_FLAGS': []}
-    return dict_element
-
-# Get flags, replacing empty flags with '-' for clarity (' S ' becomes '-S-')
-def get_flags():
+# Get flags, replacing empty flags with '_' for clarity (' S ' becomes '_S_')
+def get_flags(s):
     m_flag = s.read(1)
-    m_flag = m_flag if m_flag.strip() else '-'
+    m_flag = m_flag if m_flag.strip() else '_'
     q_flag = s.read(1)
-    q_flag = q_flag if q_flag.strip() else '-'
+    q_flag = q_flag if q_flag.strip() else '_'
     s_flag = s.read(1)
-    s_flag = s_flag if s_flag.strip() else '-'
+    s_flag = s_flag if s_flag.strip() else '_'
     return [m_flag + q_flag + s_flag]
-
-# https://docs.python.org/3/tutorial/controlflow.html#unpacking-argument-lists
-def get_day(element, **dict_element):
-    element = element.upper()
-    dict_element['ID'] += [id_station]  # Write metadata for current day
-    dict_element['YEAR'] += [year]
-    dict_element['MONTH'] += [month]
-    dict_element['DAY'] += [str(day)]
-    dict_element[element] += [s.read(5)]  # Get current value
-    dict_element[element + '_FLAGS'] += get_flags()  # Aggregate flags
-    return dict_element
 
 # Make dataframes out of the dicts, make the indices date strings (YYYY-MM-DD)
 def create_dataframe(element, dict_element):
@@ -119,10 +85,6 @@ def create_dataframe(element, dict_element):
     # Add dates (YYYY-MM-DD) as index on df. Pad days with zeros to two places
     df_element.index = df_element['YEAR'] + '-' + df_element['MONTH'] + '-' + df_element['DAY'].str.zfill(2)
     df_element.index.name = 'DATE'
-    # Add ID as secondary (primary?) index on df
-    df_element = pd.concat([df_element], keys=df_element['ID'])
-    # Clean up df, convert rows that have no values (-9999) to NaN
-    df_element = df_element.replace('-9999', float('nan'))
     # Arrange columns so ID, YEAR, MONTH, DAY are at front. Leaving them in for plotting later - https://stackoverflow.com/a/31396042
     for col in ['DAY', 'MONTH', 'YEAR', 'ID']:
         df_element = move_col_to_front(col, df_element)
@@ -136,92 +98,110 @@ def move_col_to_front(element, df):
     cols.insert(0, cols.pop(cols.index(element)))
     df = df.reindex(columns=cols)
     return df
-    
-# Move to first char in file
-s.seek(0)
 
-# Create empty dictionaries for each element. 
-# FIXME Surely there is a better way to do this.
-prcp = create_dict('PRCP')
-snow = create_dict('SNOW')
-snwd = create_dict('SNWD')
-tmax = create_dict('TMAX')
-tmin = create_dict('TMIN')
-
-num_chars_line = 269
-num_chars_metadata = 21
-
-# Read through entire StringIO stream (the .dly file) and collect the data
-i = 0
-while True:
-    i += 1
+def dly_to_csv(ftp, station_id):    
+    ftp_filename = station_id + '.dly'
     
-    # Read metadata for each line (one month of data for a particular element per line)
-    id_station = s.read(11)
-    year = s.read(4)
-    month = s.read(2)
-    day = 0
-    element = s.read(4)
+    # Write .dly file to stream using StringIO using FTP command 'RETR'
+    s = StringIO()
+    ftp.retrlines('RETR ' + ftp_path_dly_all + ftp_filename, s.write)
+    s.seek(0)
     
-    # If this is blank then we've reached EOF and should exit loop
-    if not element:
-        break
+    # Write .dly file to dir to preserve original # FIXME make optional?
+    with open(output_dir + ftp_filename, 'wb+') as f:
+        ftp.retrbinary('RETR ' + ftp_path_dly_all + ftp_filename, f.write)
     
-    # Let us know if it's running
-    if i % 100 == 0:
-        print('YYYY-MM: {}-{}  Line: {}'.format(year, month, i))
+    # Move to first char in file
+    s.seek(0)
     
-    # Loop through each day in rest of row, break if current position is end of row
+    # File params
+    num_chars_line = 269
+    num_chars_metadata = 21
+    
+    element_list = ['PRCP', 'SNOW', 'SNWD', 'TMAX', 'TMIN']
+    
+    # Read through entire StringIO stream (the .dly file) and collect the data
+    all_dicts = {}
+    element_flag = {}
+    prev_year = '0000'
+    i = 0
     while True:
-        day += 1
-        # Fill in contents of each dict depending on element type in current row
-        if element == 'PRCP':
-            prcp = get_day(element, **prcp)
-        elif element == 'SNOW':
-            snow = get_day(element, **snow)
-        elif element == 'SNWD':
-            snwd = get_day(element, **snwd)
-        elif element == 'TMAX':
-            tmax = get_day(element, **tmax)
-        elif element == 'TMIN':
-            tmin = get_day(element, **tmin)
-        else:
-            # If we don't care about the element, skip the row
-            ignored_row = s.read(num_chars_line-num_chars_metadata) 
+        i += 1
         
-        # Stop reading row if we reached the end of it
-        if s.tell() % num_chars_line == 0:
+        # Read metadata for each line (one month of data for a particular element per line)
+        id_station = s.read(11)
+        year = s.read(4)
+        month = s.read(2)
+        day = 0
+        element = s.read(4)
+        
+        # If this is blank then we've reached EOF and should exit loop
+        if not element:
             break
         
-# Create dataframes from dict
-df_prcp = create_dataframe('PRCP', prcp)
-df_snow = create_dataframe('SNOW', snow)
-df_snwd = create_dataframe('SNWD', snwd)
-df_tmax = create_dataframe('TMAX', tmax)
-df_tmin = create_dataframe('TMIN', tmin)
-
-# Combine all element dataframes into one dataframe, indexed on date. 
-# pd.concat automagically aligns values to matching indices, therefore the data is date aligned!
-list_dfs = [df_prcp,
-            df_snow,
-            df_snwd,
-            df_tmax,
-            df_tmin]
-df_all = pd.concat(list_dfs, axis=1)
-
-# Remove duplicated columns - https://stackoverflow.com/a/40435354
-df_all = df_all.loc[:,~df_all.columns.duplicated()]
-
-# Calculate average temperature since min/max are given
-df_all['TAVG_CALC'] = (df_all['TMAX'] + df_all['TMIN']) / 2
-
-# Convert to base units (doing this after TAVG_CALC gets rid of large float decimals in CSV)
-df_all['PRCP'] = df_all['PRCP'] / 10
-df_all['TMAX'] = df_all['TMAX'] / 10
-df_all['TMIN'] = df_all['TMIN'] / 10
-df_all['TAVG_CALC'] = df_all['TAVG_CALC'] / 10
-
-# Output to CSV, convert everything to strings first
-# NOTE: To open the CSV in Excel, go through the CSV import wizard, otherwise it will come out broken
-df_out = df_all.astype(str)
-df_out.to_csv(output_dir + ftp_filename + '.csv')
+        # Let us know if it's running
+        if year != prev_year:
+            print('Year {} | Line {}'.format(year, i))
+            prev_year = year
+        
+        # Loop through each day in rest of row, break if current position is end of row
+        while s.tell() % num_chars_line != 0:
+            day += 1
+            # Fill in contents of each dict depending on element type in current row
+            if element in element_list:
+                if day == 1:
+                    try:
+                        first_hit = element_flag[element]
+                    except:
+                        element_flag[element] = 1
+                        all_dicts[element] = {}
+                        all_dicts[element]['ID'] = []
+                        all_dicts[element]['YEAR'] = []
+                        all_dicts[element]['MONTH'] = []
+                        all_dicts[element]['DAY'] = []
+                        all_dicts[element][element.upper()] = []
+                        all_dicts[element][element.upper() + '_FLAGS'] = []
+                    
+                value = s.read(5)
+                flags = get_flags(s)
+                if value == '-9999':
+                    continue
+                all_dicts[element]['ID'] += [station_id] 
+                all_dicts[element]['YEAR'] += [year]
+                all_dicts[element]['MONTH'] += [month]
+                all_dicts[element]['DAY'] += [str(day)]
+                all_dicts[element][element.upper()] += [value]
+                all_dicts[element][element.upper() + '_FLAGS'] += flags
+            else:
+                # If we don't care about the element, skip the row
+                ignored_row = s.read(num_chars_line-num_chars_metadata) 
+            
+    # Create dataframes from dict
+    all_dfs = {}
+    for element in list(all_dicts.keys()):
+        all_dfs[element] = create_dataframe(element, all_dicts[element])
+    
+    # Combine all element dataframes into one dataframe, indexed on date. 
+    # pd.concat automagically aligns values to matching indices, therefore the data is date aligned!
+    list_dfs = []
+    for df in list(all_dfs.keys()):
+        list_dfs += [all_dfs[df]]
+    df_all = pd.concat(list_dfs, axis=1)
+    
+    # Remove duplicated columns - https://stackoverflow.com/a/40435354
+    df_all = df_all.loc[:,~df_all.columns.duplicated()]
+    
+    # Drop broken rows
+    df_all = df_all.loc[df_all['ID'].notnull(), :]
+    
+    # Output to CSV, convert everything to strings first
+    # NOTE: To open the CSV in Excel, go through the CSV import wizard, otherwise it will come out broken
+    df_out = df_all.astype(str)
+    df_out.to_csv(os.path.join(output_dir, station_id + '.csv'))
+    print('\nOutput CSV saved to: .\{}'.format(os.path.join(output_dir, station_id + '.csv')))
+    
+if __name__ == '__main__':
+    station_id = 'USR0000CCHC'
+    ftp = connect_to_ftp()
+    dly_to_csv(ftp, station_id)
+    ftp.quit()
