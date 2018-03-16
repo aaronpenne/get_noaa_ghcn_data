@@ -108,7 +108,7 @@ def dly_to_csv(ftp, station_id):
     s.seek(0)
     
     # Write .dly file to dir to preserve original # FIXME make optional?
-    with open(output_dir + ftp_filename, 'wb+') as f:
+    with open(os.path.join(output_dir, ftp_filename), 'wb+') as f:
         ftp.retrbinary('RETR ' + ftp_path_dly_all + ftp_filename, f.write)
     
     # Move to first char in file
@@ -148,33 +148,29 @@ def dly_to_csv(ftp, station_id):
         while s.tell() % num_chars_line != 0:
             day += 1
             # Fill in contents of each dict depending on element type in current row
-            if element in element_list:
-                if day == 1:
-                    try:
-                        first_hit = element_flag[element]
-                    except:
-                        element_flag[element] = 1
-                        all_dicts[element] = {}
-                        all_dicts[element]['ID'] = []
-                        all_dicts[element]['YEAR'] = []
-                        all_dicts[element]['MONTH'] = []
-                        all_dicts[element]['DAY'] = []
-                        all_dicts[element][element.upper()] = []
-                        all_dicts[element][element.upper() + '_FLAGS'] = []
-                    
-                value = s.read(5)
-                flags = get_flags(s)
-                if value == '-9999':
-                    continue
-                all_dicts[element]['ID'] += [station_id] 
-                all_dicts[element]['YEAR'] += [year]
-                all_dicts[element]['MONTH'] += [month]
-                all_dicts[element]['DAY'] += [str(day)]
-                all_dicts[element][element.upper()] += [value]
-                all_dicts[element][element.upper() + '_FLAGS'] += flags
-            else:
-                # If we don't care about the element, skip the row
-                ignored_row = s.read(num_chars_line-num_chars_metadata) 
+            if day == 1:
+                try:
+                    first_hit = element_flag[element]
+                except:
+                    element_flag[element] = 1
+                    all_dicts[element] = {}
+                    all_dicts[element]['ID'] = []
+                    all_dicts[element]['YEAR'] = []
+                    all_dicts[element]['MONTH'] = []
+                    all_dicts[element]['DAY'] = []
+                    all_dicts[element][element.upper()] = []
+                    all_dicts[element][element.upper() + '_FLAGS'] = []
+                
+            value = s.read(5)
+            flags = get_flags(s)
+            if value == '-9999':
+                continue
+            all_dicts[element]['ID'] += [station_id] 
+            all_dicts[element]['YEAR'] += [year]
+            all_dicts[element]['MONTH'] += [month]
+            all_dicts[element]['DAY'] += [str(day)]
+            all_dicts[element][element.upper()] += [value]
+            all_dicts[element][element.upper() + '_FLAGS'] += flags
             
     # Create dataframes from dict
     all_dfs = {}
