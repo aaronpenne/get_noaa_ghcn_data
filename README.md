@@ -1,16 +1,18 @@
 Get NOAA GHCN Data
 ==================
 
-This tool functions as an interface to the extensive weather data in the [NOAA GHCN database](https://www.ncdc.noaa.gov/data-access/land-based-station-data/land-based-datasets/global-historical-climatology-network-ghcn). You no longer need to dig through the FTP server, you can now download any historical weather data from the command line.
+This tool functions as an interface to the extensive weather data in the [NOAA GHCN database](https://www.ncdc.noaa.gov/data-access/land-based-station-data/land-based-datasets/global-historical-climatology-network-ghcn). No manually digging through the FTP server or going through Google Big Query, just directly download your station's weather from the command line.
 
 <p align="center"><img src="https://github.com/aaronpenne/get_noaa_ghcn_data/blob/master/screenshots/usage.gif" alt="Screen capture of program usage."></p>
 
-With get_noaa_ghcn_data.py you can:
+get_noaa_ghcn_data.py
+---------------------
+Run this tool from the command line to:
 - Search for a Global Historical Climatology Network (GHCN) station ID using plain text
 - Download a station's daily weather data in raw .dly format
 - Download a station's daily weather data in a reformatted .csv for easy analysis
 
-The format of each stations daily measurements are fixed width files with one row per month per element, and multiple columns for the days:
+The format of each station's daily measurements are fixed width files with one row per month per element, and multiple columns for the days:
 
 ```
     ------------------------------
@@ -37,7 +39,7 @@ The format of each stations daily measurements are fixed width files with one ro
     SFLAG31    269-269   Character
 ```
 
-This tool parses all of the station's available data and outputs it with one row per day, and multiple columns for the elements. This is easier to analyze programattically and to read, as seen below: 
+This tool parses all of the station's available data and outputs it with one row per day, and multiple columns for the elements. This is easier to analyze programattically and read, as seen below: 
 
 ![Screenshot of reformatted .csv file](https://github.com/aaronpenne/get_noaa_ghcn_data/blob/master/screenshots/csv.png)
 
