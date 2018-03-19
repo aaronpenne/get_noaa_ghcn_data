@@ -3,7 +3,7 @@ Get NOAA GHCN Data
 
 This tool functions as an interface to the extensive weather data in the [NOAA GHCN database](https://www.ncdc.noaa.gov/data-access/land-based-station-data/land-based-datasets/global-historical-climatology-network-ghcn). You no longer need to dig through the FTP server, you can now download any historical weather data from the command line.
 
-![Screen capture of program usage.](https://github.com/aaronpenne/get_noaa_ghcn_data/blob/master/screenshots/usage.gif)
+<p align="center"><img src="https://github.com/aaronpenne/get_noaa_ghcn_data/blob/master/screenshots/usage.gif" alt="Screen capture of program usage."></p>
 
 With get_noaa_ghcn_data.py you can:
 - Search for a Global Historical Climatology Network (GHCN) station ID using plain text

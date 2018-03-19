@@ -200,6 +200,7 @@ def dly_to_csv(ftp, station_id):
     for df in list(all_dfs.keys()):
         list_dfs += [all_dfs[df]]
     df_all = pd.concat(list_dfs, axis=1)
+    df_all.index.name = 'MM/DD/YYYY'
     
     '''
     Remove duplicated/broken columns and rows
