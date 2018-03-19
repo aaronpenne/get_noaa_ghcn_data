@@ -59,17 +59,20 @@ if not os.path.isdir(output_dir):
 ftp_path_dly_all = '/pub/data/ghcn/daily/all/'
 
 def connect_to_ftp():
-    # Get FTP server and file details
+    """
+    Get FTP server and file details
+    """
     ftp_path_root = 'ftp.ncdc.noaa.gov'
-    
     # Access NOAA FTP server
     ftp = FTP(ftp_path_root)
     message = ftp.login()  # No credentials needed
     print(message)
     return ftp
 
-# Get flags, replacing empty flags with '_' for clarity (' S ' becomes '_S_')
 def get_flags(s):
+    """
+    Get flags, replacing empty flags with '_' for clarity (' S ' becomes '_S_')
+    """
     m_flag = s.read(1)
     m_flag = m_flag if m_flag.strip() else '_'
     q_flag = s.read(1)
@@ -78,8 +81,10 @@ def get_flags(s):
     s_flag = s_flag if s_flag.strip() else '_'
     return [m_flag + q_flag + s_flag]
 
-# Make dataframes out of the dicts, make the indices date strings (YYYY-MM-DD)
 def create_dataframe(element, dict_element):
+    """
+    Make dataframes out of the dicts, make the indices date strings (YYYY-MM-DD)
+    """
     element = element.upper()
     df_element = pd.DataFrame(dict_element)
     # Add dates (YYYY-MM-DD) as index on df. Pad days with zeros to two places
@@ -117,10 +122,12 @@ def dly_to_csv(ftp, station_id):
     # File params
     num_chars_line = 269
     num_chars_metadata = 21
-    
+
     element_list = ['PRCP', 'SNOW', 'SNWD', 'TMAX', 'TMIN']
     
-    # Read through entire StringIO stream (the .dly file) and collect the data
+    '''
+    Read through entire StringIO stream (the .dly file) and collect the data
+    '''
     all_dicts = {}
     element_flag = {}
     prev_year = '0000'
@@ -128,7 +135,9 @@ def dly_to_csv(ftp, station_id):
     while True:
         i += 1
         
-        # Read metadata for each line (one month of data for a particular element per line)
+        '''
+        Read metadata for each line (one month of data for a particular element per line)
+        '''
         id_station = s.read(11)
         year = s.read(4)
         month = s.read(2)
@@ -139,12 +148,16 @@ def dly_to_csv(ftp, station_id):
         if not element:
             break
         
-        # Let us know if it's running
+        '''
+        Print status
+        '''
         if year != prev_year:
             print('Year {} | Line {}'.format(year, i))
             prev_year = year
         
-        # Loop through each day in rest of row, break if current position is end of row
+        '''
+        Loop through each day in rest of row, break if current position is end of row
+        '''
         while s.tell() % num_chars_line != 0:
             day += 1
             # Fill in contents of each dict depending on element type in current row
@@ -172,30 +185,40 @@ def dly_to_csv(ftp, station_id):
             all_dicts[element][element.upper()] += [value]
             all_dicts[element][element.upper() + '_FLAGS'] += flags
             
-    # Create dataframes from dict
+    '''
+    Create dataframes from dict
+    '''
     all_dfs = {}
     for element in list(all_dicts.keys()):
         all_dfs[element] = create_dataframe(element, all_dicts[element])
     
-    # Combine all element dataframes into one dataframe, indexed on date. 
+    '''
+    Combine all element dataframes into one dataframe, indexed on date. 
+    '''
     # pd.concat automagically aligns values to matching indices, therefore the data is date aligned!
     list_dfs = []
     for df in list(all_dfs.keys()):
         list_dfs += [all_dfs[df]]
     df_all = pd.concat(list_dfs, axis=1)
     
-    # Remove duplicated columns - https://stackoverflow.com/a/40435354
+    '''
+    Remove duplicated/broken columns and rows
+    '''
+    # https://stackoverflow.com/a/40435354
     df_all = df_all.loc[:,~df_all.columns.duplicated()]
-    
-    # Drop broken rows
     df_all = df_all.loc[df_all['ID'].notnull(), :]
     
-    # Output to CSV, convert everything to strings first
+    '''
+    Output to CSV, convert everything to strings first
+    '''
     # NOTE: To open the CSV in Excel, go through the CSV import wizard, otherwise it will come out broken
     df_out = df_all.astype(str)
     df_out.to_csv(os.path.join(output_dir, station_id + '.csv'))
     print('\nOutput CSV saved to: .\{}'.format(os.path.join(output_dir, station_id + '.csv')))
     
+'''
+Main
+'''
 if __name__ == '__main__':
     station_id = 'USR0000CCHC'
     ftp = connect_to_ftp()

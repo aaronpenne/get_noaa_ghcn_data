@@ -1,36 +1,18 @@
-get_noaa_ghcn_data
+Get NOAA GHCN Data
 ==================
 
-Global Historical Climatology Network data parsed into reshaped CSVs. The `get_dly.py` program grabs a .dly file from the NOAA GHCN FTP server, parses, and reshapes to have one day per row and element values in the columns. The output is written out as a pandas DataFrame and a CSV file.
+This tool functions as an interface to the extensive weather data in the [NOAA GHCN database](https://www.ncdc.noaa.gov/data-access/land-based-station-data/land-based-datasets/global-historical-climatology-network-ghcn). You no longer need to dig through the FTP server, you can now download any historical weather data from the command line.
 
-Data source: https://www.ncdc.noaa.gov/data-access/land-based-station-data/land-based-datasets/global-historical-climatology-network-ghcn
+![Screen capture of program usage.](https://github.com/aaronpenne/get_noaa_ghcn_data/blob/master/screenshots/usage.gif)
 
- 
+With get_noaa_ghcn_data.py you can:
+- Search for a Global Historical Climatology Network (GHCN) station ID using plain text
+- Download a station's daily weather data in raw .dly format
+- Download a station's daily weather data in a reformatted .csv for easy analysis
+
+The format of each stations daily measurements are fixed width files with one row per month per element, and multiple columns for the days:
+
 ```
-.dly Format In (roughly):                     .csv Format Out (roughly):
--------------------------                     --------------------------
-Month1  PRCP  Day1  Day2 ... Day31            Day1  PRCP  SNOW
-Month1  SNOW  Day1  Day2 ... Day31            Day2  PRCP  SNOW
-Month2  PRCP  Day1  Day2 ... Day31            Day3  PRCP  SNOW
-Month2  SNOW  Day1  Day2 ... Day31            Day4  PRCP  SNOW
-```
-
-Starting with 5 core elements (per README)
-
-    PRCP = Precipitation (tenths of mm)
-    SNOW = Snowfall (mm)
-    SNWD = Snow depth (mm)
-    TMAX = Maximum temperature (tenths of degrees C)
-    TMIN = Minimum temperature (tenths of degrees C)
-    
-Conversions:
-
-    PRCP = (tenths of mm) -> (mm)
-    TMAX = (tenths of degrees C) -> (degrees C)
-    TMIN = (tenths of degrees C) -> (degrees C)
-    
-[Codebook/ICD](https://www1.ncdc.noaa.gov/pub/data/ghcn/daily/readme.txt):
-
     ------------------------------
     Variable   Columns   Type
     ------------------------------
@@ -53,30 +35,38 @@ Conversions:
     MFLAG31    267-267   Character
     QFLAG31    268-268   Character
     SFLAG31    269-269   Character
+```
+
+This tool parses all of the station's available data and outputs it with one row per day, and multiple columns for the elements. This is easier to analyze programattically and to read, as seen below: 
+
+![Screenshot of reformatted .csv file](https://github.com/aaronpenne/get_noaa_ghcn_data/blob/master/screenshots/csv.png)
 
 
+Background
+----------
 
-FIXME
------
+> The Global Historical Climatology Network (GHCN) is an integrated database of climate summaries from land surface stations across the globe that have been subjected to a common suite of quality assurance reviews. The data are obtained from more than 20 sources. Some data are more than 175 years old while others are less than an hour old. GHCN is the official archived dataset, and it serves as a replacement product for older NCEI-maintained datasets that are designated for daily temporal resolution
 
-- [ ] Focus on .dly first
-- [x] Grab current .dly file from FTP server ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/all/
-- [x] Read .dly file into DataFrame using ICD https://www1.ncdc.noaa.gov/pub/data/ghcn/daily/readme.txt
-- [x] Create separate lists first then create empty DataFrame and fill with lists as columns
-    - [ ] Option to download .dly file or read from stream?
-    - [x] Reshape data to have one day per line (lump flags together like Q-XY)
-  
-    | DAY | PRCP | PRCP_M | PRCP_Q | PRCP_S | TMIN | TMIN_M | ... |
-    | --- | ---- | ------ | ------ | ------ | ---- | ------ | --- |
-    | 12  | 0.5  | X      | X      |  X     | 55   | X      | ... |
-    
-    OR
-    
-    | DAY | PRCP | PRCP_FLAGS | TMIN | TMIN_FLAGS | ... |
-    | --- | ---- | ---------- | ---- | ---------- | --- |
-    | 12  | 0.5  | Q-XY       | 55   | MX-        | ... |
-    
-- [x] Ouput file as CSV
-- [x] Make search tool to get station IDs ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-stations.txt
-- [ ] Import reshaped files into database instead of CSVs
-- [ ] Make awesome charts!
+The five core elements (measurements) are:
+- PRCP = Precipitation (tenths of mm)
+- SNOW = Snowfall (mm)
+- SNWD = Snow depth (mm)
+- TMAX = Maximum temperature (tenths of degrees C)
+- TMIN = Minimum temperature (tenths of degrees C)
+
+For a full list of possible elements (measurements) see the [codebook](https://www1.ncdc.noaa.gov/pub/data/ghcn/daily/readme.txt).
+
+
+Dependencies
+------------
+- [Python 3](https://www.python.org/)
+- [pandas](https://github.com/pandas-dev/pandas)
+
+Developed with Python 3.6 on Windows 10. 
+
+
+License
+-------
+[MIT License](https://github.com/aaronpenne/get_noaa_ghcn_data/blob/master/LICENSE.md) © Aaron Penne
+
+Disclaimer: This project is not affiliated with NOAA or GHCN in any way.
