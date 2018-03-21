@@ -21,6 +21,7 @@ WMO ID       81-85   Character
 
 """
 
+import sys
 import pandas as pd
 from ftplib import FTP
 import os
@@ -35,14 +36,14 @@ ftp_filename = 'ghcnd-stations.txt'
 
 def connect_to_ftp():
     ftp_path_root = 'ftp.ncdc.noaa.gov'
-    
+
     # Access NOAA FTP server
     ftp = FTP(ftp_path_root)
     message = ftp.login()  # No credentials needed
     print(message)
     return ftp
 
-def get_station_id(ftp): 
+def get_station_id(ftp):
     '''
     Get stations file
     '''
@@ -51,7 +52,7 @@ def get_station_id(ftp):
     if not os.path.isfile(local_full_path):
         with open(local_full_path, 'wb+') as f:
             ftp.retrbinary('RETR ' + ftp_full_path, f.write)
-            
+
     '''
     Get user search term
     '''
@@ -60,7 +61,7 @@ def get_station_id(ftp):
     query = query.upper()
     # FIXME try/catch and clean input
     print()
-    
+
     '''
     Read stations text file using fixed-width-file reader built into pandas
     '''
@@ -85,7 +86,7 @@ def get_station_id(ftp):
               4,   # HCN/CRN Flag
               6]   # WMO ID
     df = pd.read_fwf(local_full_path, widths=widths, names=names, dtype=dtype, header=None)
-    
+
     '''
     Replace missing values (nan, -999.9)
     '''
@@ -93,64 +94,71 @@ def get_station_id(ftp):
     df['GSN_FLAG'] = df['GSN_FLAG'].replace('nan', '---')
     df['HCN_CRN_FLAG'] = df['GSN_FLAG'].replace('nan', '---')
     df = df.replace(-999.9, float('nan'))
-    
-    '''
-    Get query results, but only the columns we care about
-    '''
-    print('Searching records...')
-    matches = df['STATION_NAME'].str.contains(query)
-    df = df.loc[matches, ['STATION_ID', 'LATITUDE', 'LONGITUDE', 'ELEVATION', 'STATE', 'STATION_NAME']]
-    df.reset_index(drop=True, inplace=True)
-    
-    '''
-    Get file sizes of each station's records to augment results
-    '''
-    print('Getting file sizes...', end='')
-    ftp.voidcmd('TYPE I')  # Needed to avoid FTP error with ftp.size()
-    for i in list(df.index):
-        print('.', end='')
-        ftp_dly_file = ftp_path_dly + 'all/' + df.loc[i, 'STATION_ID'] + '.dly'
-        df.loc[i, 'SIZE'] = round(ftp.size(ftp_dly_file)/1000)  # Kilobytes
-    print()
-    print()
-    
-    '''
-    Sort by size then by rounded lat/long values to group geographic areas and show stations with most data
-    '''
-    df_sort = df.round(0)
-    df_sort.sort_values(['LATITUDE', 'LONGITUDE', 'SIZE'], ascending=False, inplace=True)
-    df = df.loc[df_sort.index]
-    df.reset_index(drop=True, inplace=True)
-    
-    '''
-    Print headers to facilitate reading
-    '''
-    selection = 'Index'
-    station_id = 'Station_ID '
-    lat = 'Latitude'
-    lon = 'Longitude'
-    state = 'State'
-    name = 'Station_Name                '
-    size = ' File_Size'
-    # Format output to be pretty, hopefully there is a prettier way to do this.
-    print('{: <6}{: <31}{: <6}({: >8},{: >10}){: >13}'.format(selection, name, state, lat, lon, size))
-    print('-'*5 + ' ' + '-'*30 + ' ' + '-'*5 + ' ' + '-'*21 + ' ' + '-'*12)
-    for i in list(df.index):
-        print('{: 4}: {: <31}{: <6}({:8.4f},{:10.4f}){:10.0f} Kb'.format(i,
-                                                                          df.loc[i,'STATION_NAME'],
-                                                                          df.loc[i,'STATE'],
-                                                                          df.loc[i,'LATITUDE'],
-                                                                          df.loc[i,'LONGITUDE'],
-                                                                          df.loc[i,'SIZE']))
-    
+
+    try:
+        '''
+        Get query results, but only the columns we care about
+        '''
+        print('Searching records...')
+        matches = df['STATION_NAME'].str.contains(query)
+        df = df.loc[matches, ['STATION_ID', 'LATITUDE', 'LONGITUDE', 'ELEVATION', 'STATE', 'STATION_NAME']]
+        df.reset_index(drop=True, inplace=True)
+
+        '''
+        Get file sizes of each station's records to augment results
+        '''
+        print('Getting file sizes...', end='')
+        ftp.voidcmd('TYPE I')  # Needed to avoid FTP error with ftp.size()
+        for i in list(df.index):
+            print('.', end='')
+            ftp_dly_file = ftp_path_dly + 'all/' + df.loc[i, 'STATION_ID'] + '.dly'
+            df.loc[i, 'SIZE'] = round(ftp.size(ftp_dly_file)/1000)  # Kilobytes
+        print()
+        print()
+
+        '''
+        Sort by size then by rounded lat/long values to group geographic areas and show stations with most data
+        '''
+        df_sort = df.round(0)
+        df_sort.sort_values(['LATITUDE', 'LONGITUDE', 'SIZE'], ascending=False, inplace=True)
+        df = df.loc[df_sort.index]
+        df.reset_index(drop=True, inplace=True)
+
+        '''
+        Print headers to facilitate reading
+        '''
+        selection = 'Index'
+        station_id = 'Station_ID '
+        lat = 'Latitude'
+        lon = 'Longitude'
+        state = 'State'
+        name = 'Station_Name                '
+        size = ' File_Size'
+        # Format output to be pretty, hopefully there is a prettier way to do this.
+        print('{: <6}{: <31}{: <6}({: >8},{: >10}){: >13}'.format(selection, name, state, lat, lon, size))
+        print('-'*5 + ' ' + '-'*30 + ' ' + '-'*5 + ' ' + '-'*21 + ' ' + '-'*12)
+        for i in list(df.index):
+            print('{: 4}: {: <31}{: <6}({:8.4f},{:10.4f}){:10.0f} Kb'.format(i,
+                                                                              df.loc[i,'STATION_NAME'],
+                                                                              df.loc[i,'STATE'],
+                                                                              df.loc[i,'LATITUDE'],
+                                                                              df.loc[i,'LONGITUDE'],
+                                                                              df.loc[i,'SIZE']))
+
+    except:
+        print('Station not found')
+        sys.exit()
+
     '''
     Get user selection
     '''
-    query = input('Enter selection (ex. 001, 42): ')
-    query = int(query)
-    
-    # FIXME try/catch and clean input
-    
+    try:
+        query = input('Enter selection (ex. 001, 42): ')
+        query = int(query)
+    except:
+        print('Please enter valid selection (ex. 001, 42)')
+        sys.exit()
+
     station_id = df.loc[query, 'STATION_ID']
     return station_id
 
