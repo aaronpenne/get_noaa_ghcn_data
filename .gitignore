@@ -18,3 +18,6 @@ __pycache__
 
 # Dev output folders
 output
+
+# Mac trash
+.DS_Store
