@@ -215,7 +215,7 @@ def dly_to_csv(ftp, station_id):
     # NOTE: To open the CSV in Excel, go through the CSV import wizard, otherwise it will come out broken
     df_out = df_all.astype(str)
     df_out.to_csv(os.path.join(output_dir, station_id + '.csv'))
-    print('\nOutput CSV saved to: .\{}'.format(os.path.join(output_dir, station_id + '.csv')))
+    print('\nOutput CSV saved to: {}'.format(os.path.join(output_dir, station_id + '.csv')))
     
 '''
 Main

@@ -67,9 +67,9 @@ def get_station_id(ftp):
     '''
     # http://pandas.pydata.org/pandas-docs/stable/generated/pandas.read_fwf.html
     dtype = {'STATION_ID': str,
-             'LATITUDE': float,
-             'LONGITUDE': float,
-             'ELEVATION': float,
+             'LATITUDE': str,
+             'LONGITUDE': str,
+             'ELEVATION': str,
              'STATE': str,
              'STATION_NAME': str,
              'GSN_FLAG': str,
@@ -123,31 +123,31 @@ def get_station_id(ftp):
         df_sort.sort_values(['LATITUDE', 'LONGITUDE', 'SIZE'], ascending=False, inplace=True)
         df = df.loc[df_sort.index]
         df.reset_index(drop=True, inplace=True)
-
-        '''
-        Print headers to facilitate reading
-        '''
-        selection = 'Index'
-        station_id = 'Station_ID '
-        lat = 'Latitude'
-        lon = 'Longitude'
-        state = 'State'
-        name = 'Station_Name                '
-        size = ' File_Size'
-        # Format output to be pretty, hopefully there is a prettier way to do this.
-        print('{: <6}{: <31}{: <6}({: >8},{: >10}){: >13}'.format(selection, name, state, lat, lon, size))
-        print('-'*5 + ' ' + '-'*30 + ' ' + '-'*5 + ' ' + '-'*21 + ' ' + '-'*12)
-        for i in list(df.index):
-            print('{: 4}: {: <31}{: <6}({:8.4f},{:10.4f}){:10.0f} Kb'.format(i,
-                                                                              df.loc[i,'STATION_NAME'],
-                                                                              df.loc[i,'STATE'],
-                                                                              df.loc[i,'LATITUDE'],
-                                                                              df.loc[i,'LONGITUDE'],
-                                                                              df.loc[i,'SIZE']))
-
+        
     except:
         print('Station not found')
         sys.exit()
+    
+    '''
+    Print headers and valuesto facilitate reading
+    '''
+    selection = 'Index'
+    station_id = 'Station_ID '
+    lat = 'Latitude'
+    lon = 'Longitude'
+    state = 'State'
+    name = 'Station_Name                '
+    size = ' File_Size'
+    # Format output to be pretty, hopefully there is a prettier way to do this.
+    print('{: <6}{: <31}{: <6}({: >8},{: >10}){: >13}'.format(selection, name, state, lat, lon, size))
+    print('-'*5 + ' ' + '-'*30 + ' ' + '-'*5 + ' ' + '-'*21 + ' ' + '-'*12)
+    for i in list(df.index):
+        print('{: 4}: {: <31}{: <6}({: >8},{: >10}){: >10} Kb'.format(i,
+                                                                          df.loc[i,'STATION_NAME'],
+                                                                          df.loc[i,'STATE'],
+                                                                          df.loc[i,'LATITUDE'],
+                                                                          df.loc[i,'LONGITUDE'],
+                                                                          df.loc[i,'SIZE']))
 
     '''
     Get user selection
