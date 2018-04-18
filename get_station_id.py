@@ -75,7 +75,7 @@ def get_station_id(ftp):
              'GSN_FLAG': str,
              'HCN_CRN_FLAG': str,
              'WMO_ID': str}
-    names = list(dtype.keys())
+    names = ['STATION_ID', 'LATITUDE', 'LONGITUDE', 'ELEVATION', 'STATE', 'STATION_NAME', 'GSN_FLAG', 'HCN_CRN_FLAG', 'WMO_ID']
     widths = [11,  # Station ID
               9,   # Latitude (decimal degrees)
               10,  # Longitude (decimal degrees)
@@ -129,7 +129,7 @@ def get_station_id(ftp):
         sys.exit()
     
     '''
-    Print headers and valuesto facilitate reading
+    Print headers and values to facilitate reading
     '''
     selection = 'Index'
     station_id = 'Station_ID '
