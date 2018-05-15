@@ -18,19 +18,20 @@ if not os.path.isdir(output_dir):
     os.mkdir(output_dir)
 
 # Get input data
-input_file = os.path.join('data', 'boston_logan.csv')
+input_file = os.path.join('data', 'usc.csv')
 df = pd.read_csv(input_file, parse_dates=[0])
 
 # FIXME or do something with scatter plot of hottest day each week, color if max
 
 year_list = []
-for year in range(1936, 2018):
-    fig, ax = plt.subplots(figsize=(8, 4), dpi=150)
+df['SMOOTH'] = df['TMAX'].rolling(30).mean()
+for year in range(1922, 2018):
+    fig, ax = plt.subplots(figsize=(6, 4), dpi=150)
     year_list.append(year)
     length = len(year_list)
     for i, segment in enumerate(year_list):
-        dp = df.loc[df['YEAR']==segment, ['MM/DD/YYYY', 'MONTH', 'TMAX']].reset_index(drop=True)
-        y = dp['TMAX'] #.rolling(30).mean()
+        dp = df.loc[df['YEAR']==segment, ['MM/DD/YYYY', 'MONTH', 'SMOOTH', 'TMAX']].reset_index(drop=True)
+        y = dp['SMOOTH']
         x = dp['MM/DD/YYYY'].apply(lambda dt: dt.replace(year=2000))
 #        dp = dp.groupby(by='MONTH').max()
         alpha = math.exp(1-(1/((i+1)/length)**2))
@@ -65,4 +66,4 @@ for i, f in enumerate(png_files):
             charts.append(imageio.imread(os.path.join(output_dir, f)))
 
 # Save gif
-imageio.mimsave(os.path.join(output_dir, 'temperature_boston.gif'), charts, format='GIF', duration=0.2)
+imageio.mimsave(os.path.join(output_dir, 'temperature_boston_smooth_30.gif'), charts, format='GIF', duration=0.2)
