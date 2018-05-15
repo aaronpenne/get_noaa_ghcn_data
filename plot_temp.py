@@ -18,6 +18,7 @@ if not os.path.isdir(output_dir):
 input_file = os.path.join('data', 'usc.csv')
 df = pd.read_csv(input_file, parse_dates=[0])
 
+# FIXME or do something with scatter plot of hottest day each week, color if max
 
 year_list = []
 for year in range(1922, 2018):
@@ -29,7 +30,9 @@ for year in range(1922, 2018):
         y = dp['TMAX'].rolling(14).mean()
         x = dp['MM/DD/YYYY'].apply(lambda dt: dt.replace(year=2000))
 #        dp = dp.groupby(by='MONTH').max()
-        alpha = math.exp(1-(1/((i+1)/length)**2))+0.05
+        alpha = math.exp(1-(1/((i+1)/length)**2))
+        if alpha < 0.1:
+            alpha=0.1
         if segment == year_list[-1]:
             plt.plot(x, y, color='#800000', alpha=alpha)
         else:
