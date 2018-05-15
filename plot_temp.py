@@ -2,12 +2,15 @@
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.dates as md
 import matplotlib as mpl
 import math
 from datetime import datetime
 import imageio
 
 mpl.rcParams['font.family'] = 'monospace'
+months = md.MonthLocator()  # every month
+monthsFmt = md.DateFormatter('%b')
 
 # Set output directory, make it if needed
 output_dir = os.path.realpath('output')
@@ -15,19 +18,19 @@ if not os.path.isdir(output_dir):
     os.mkdir(output_dir)
 
 # Get input data
-input_file = os.path.join('data', 'usc.csv')
+input_file = os.path.join('data', 'boston_logan.csv')
 df = pd.read_csv(input_file, parse_dates=[0])
 
 # FIXME or do something with scatter plot of hottest day each week, color if max
 
 year_list = []
-for year in range(1922, 2018):
-    fig, ax = plt.subplots(figsize=(6, 4), dpi=150)
+for year in range(1936, 2018):
+    fig, ax = plt.subplots(figsize=(8, 4), dpi=150)
     year_list.append(year)
     length = len(year_list)
     for i, segment in enumerate(year_list):
         dp = df.loc[df['YEAR']==segment, ['MM/DD/YYYY', 'MONTH', 'TMAX']].reset_index(drop=True)
-        y = dp['TMAX'].rolling(14).mean()
+        y = dp['TMAX'] #.rolling(30).mean()
         x = dp['MM/DD/YYYY'].apply(lambda dt: dt.replace(year=2000))
 #        dp = dp.groupby(by='MONTH').max()
         alpha = math.exp(1-(1/((i+1)/length)**2))
@@ -38,7 +41,10 @@ for year in range(1922, 2018):
         else:
             plt.plot(x, y, color='#3f3f3f', alpha=alpha)        
         plt.title(year)
-    plt.ylim((0, 500))
+    plt.ylim(int(math.floor(df['TMAX'].min() / 100.0)) * 100, int(math.ceil(df['TMAX'].max() / 100.0)) * 100)
+    plt.xlim(datetime(2000, 1, 1), datetime(2000, 12, 31))
+    ax.xaxis.set_major_locator(months)
+    ax.xaxis.set_major_formatter(monthsFmt)
     fig.savefig(os.path.join(output_dir, '{}.png'.format(year)),
             dpi=fig.dpi,
             bbox_inches='tight',
@@ -59,4 +65,4 @@ for i, f in enumerate(png_files):
             charts.append(imageio.imread(os.path.join(output_dir, f)))
 
 # Save gif
-imageio.mimsave(os.path.join(output_dir, 'temperature_usc.gif'), charts, format='GIF', duration=0.2)
+imageio.mimsave(os.path.join(output_dir, 'temperature_boston.gif'), charts, format='GIF', duration=0.2)
