@@ -58,6 +58,7 @@ The five core elements (measurements) are:
 
 For a full list of possible elements (measurements) see the [codebook](https://www1.ncdc.noaa.gov/pub/data/ghcn/daily/readme.txt).
 
+The five core elements which are recorded by most stations are precipitation, snow, snow depth, max temp, and min temp. There are several other attributes that may or may not be recorded in each station's dataset including: average cloudiness, average daily wind direction, average daily wind speed, water evaporation, time of fastest wind, frozen ground layer depth, water depth gauge heights, evaporation pan water temperature, percent of day that is sunshine, soil temp, soil type, ice thickness, direction of fastest winds, weather type, multiday measurements, and number of days included in multiday measurements. There are also flags indicating measurement details, quality details, and the source agency of the measurement.
 
 Dependencies
 ------------
