@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Grabs .dly file from the NOAA GHCN FTP server, parses, and reshapes to have one 
+Grabs .dly file from the NOAA GHCN FTP server, parses, and reshapes to have one
 day per row and element values in the columns. Writes output as CSV.
 
 Author: Aaron Penne
- 
+
 
 .dly Format In (roughly):                     .csv Format Out (roughly):
 -------------------------                     --------------------------
@@ -96,7 +96,7 @@ def create_dataframe(element, dict_element):
     # Convert numerical values to float
     df_element.loc[:,element] = df_element.loc[:,element].astype(float)
     return df_element
-    
+
 def move_col_to_front(element, df):
     element = element.upper()
     cols = df.columns.tolist()
@@ -104,27 +104,27 @@ def move_col_to_front(element, df):
     df = df.reindex(columns=cols)
     return df
 
-def dly_to_csv(ftp, station_id):    
+def dly_to_csv(ftp, station_id):
     ftp_filename = station_id + '.dly'
-    
+
     # Write .dly file to stream using StringIO using FTP command 'RETR'
     s = StringIO()
     ftp.retrlines('RETR ' + ftp_path_dly_all + ftp_filename, s.write)
     s.seek(0)
-    
+
     # Write .dly file to dir to preserve original # FIXME make optional?
     with open(os.path.join(output_dir, ftp_filename), 'wb+') as f:
         ftp.retrbinary('RETR ' + ftp_path_dly_all + ftp_filename, f.write)
-    
+
     # Move to first char in file
     s.seek(0)
-    
+
     # File params
     num_chars_line = 269
     num_chars_metadata = 21
 
     element_list = ['PRCP', 'SNOW', 'SNWD', 'TMAX', 'TMIN']
-    
+
     '''
     Read through entire StringIO stream (the .dly file) and collect the data
     '''
@@ -134,7 +134,7 @@ def dly_to_csv(ftp, station_id):
     i = 0
     while True:
         i += 1
-        
+
         '''
         Read metadata for each line (one month of data for a particular element per line)
         '''
@@ -143,18 +143,18 @@ def dly_to_csv(ftp, station_id):
         month = s.read(2)
         day = 0
         element = s.read(4)
-        
+
         # If this is blank then we've reached EOF and should exit loop
         if not element:
             break
-        
+
         '''
         Print status
         '''
         if year != prev_year:
             print('Year {} | Line {}'.format(year, i))
             prev_year = year
-        
+
         '''
         Loop through each day in rest of row, break if current position is end of row
         '''
@@ -173,42 +173,42 @@ def dly_to_csv(ftp, station_id):
                     all_dicts[element]['DAY'] = []
                     all_dicts[element][element.upper()] = []
                     all_dicts[element][element.upper() + '_FLAGS'] = []
-                
+
             value = s.read(5)
             flags = get_flags(s)
             if value == '-9999':
                 continue
-            all_dicts[element]['ID'] += [station_id] 
+            all_dicts[element]['ID'] += [station_id]
             all_dicts[element]['YEAR'] += [year]
             all_dicts[element]['MONTH'] += [month]
             all_dicts[element]['DAY'] += [str(day)]
             all_dicts[element][element.upper()] += [value]
             all_dicts[element][element.upper() + '_FLAGS'] += flags
-            
+
     '''
     Create dataframes from dict
     '''
     all_dfs = {}
     for element in list(all_dicts.keys()):
         all_dfs[element] = create_dataframe(element, all_dicts[element])
-    
+
     '''
-    Combine all element dataframes into one dataframe, indexed on date. 
+    Combine all element dataframes into one dataframe, indexed on date.
     '''
     # pd.concat automagically aligns values to matching indices, therefore the data is date aligned!
     list_dfs = []
     for df in list(all_dfs.keys()):
         list_dfs += [all_dfs[df]]
-    df_all = pd.concat(list_dfs, axis=1)
+    df_all = pd.concat(list_dfs, axis=1, sort=False)
     df_all.index.name = 'MM/DD/YYYY'
-    
+
     '''
     Remove duplicated/broken columns and rows
     '''
     # https://stackoverflow.com/a/40435354
     df_all = df_all.loc[:,~df_all.columns.duplicated()]
     df_all = df_all.loc[df_all['ID'].notnull(), :]
-    
+
     '''
     Output to CSV, convert everything to strings first
     '''
@@ -216,7 +216,7 @@ def dly_to_csv(ftp, station_id):
     df_out = df_all.astype(str)
     df_out.to_csv(os.path.join(output_dir, station_id + '.csv'))
     print('\nOutput CSV saved to: {}'.format(os.path.join(output_dir, station_id + '.csv')))
-    
+
 '''
 Main
 '''
